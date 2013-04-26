@@ -15,7 +15,7 @@ import subprocess
 
 def get_repos(username):
     conn = httplib.HTTPSConnection("api.github.com")
-    conn.request("GET", "/users/%s/repos" % username)
+    conn.request("GET", "/users/%s/repos" % username, headers={'User-Agent': 'githubbackup.py'})
     response = conn.getresponse()
     if response.status == 404:
         print("no such github user found")
