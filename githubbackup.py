@@ -47,6 +47,7 @@ def run():
 
     parser.add_argument('username', help='github username')
     parser.add_argument('directory', help='target directory for the cloned repositories')
+    parser.add_argument('--exclude-forks', action='store_const', const=True, default=False)
     args = parser.parse_args()
     if not os.path.isdir(args.directory):
         print("%s is not a directory" % args.directory)
@@ -55,6 +56,9 @@ def run():
     print("fetching repository list")
     success=True
     for repo in get_repos(args.username):
+        if args.exclude_forks and repo.get("fork", False):
+            continue
+
         print("creating backup from %s" % repo['name'])
         rc=clone_and_update(repo['git_url'], os.path.join(args.directory, repo['name']))
         if not rc:
