@@ -4,7 +4,7 @@ This script clones all public repositories of a github user
 to create local backups and keeps those backups up-to-date.
 """
 
-import httplib
+import http.client
 import json
 import argparse
 import sys
@@ -14,15 +14,24 @@ import subprocess
 
 
 def get_repos(username):
-    conn = httplib.HTTPSConnection("api.github.com")
-    conn.request("GET", "/users/%s/repos" % username, headers={'User-Agent': 'githubbackup.py'})
-    response = conn.getresponse()
-    if response.status == 404:
-        print("no such github user found")
-        sys.exit(1)
-    if response.status != 200:
-        raise Exception("calling github api failed with http status code %d", response.status)
-    return json.loads(response.read())
+    conn = http.client.HTTPSConnection("api.github.com")
+    page = 1
+    repos = []
+    while True:
+        conn.request("GET", f"/users/{username}/repos?page={page}", headers={'User-Agent': 'githubbackup.py'})
+        response = conn.getresponse()
+        if response.status == 404:
+            print("no such github user found")
+            sys.exit(1)
+        if response.status != 200:
+            raise Exception("calling github api failed with http status code %d", response.status)
+        
+        _repos = json.loads(response.read())
+        if len(_repos) == 0:
+            break
+        repos.extend(_repos)
+        page += 1
+    return repos 
 
 def clone_and_update(url, targetdir):
     if os.path.isdir(targetdir):
